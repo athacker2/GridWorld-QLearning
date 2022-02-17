@@ -47,3 +47,13 @@ class Graph:
         if(weight==None):
             weight = 1
         self.Edges.append((node1,node2,weight))
+    
+    def getNeighbors(self,node):
+        """Returns a list of neighboring nodes for a particular node"""
+        neighbors = set()
+        for edge in self.Edges:
+            if(edge[0] == node):
+                neighbors.add(edge[1])
+            elif(edge[1] == node):
+                neighbors.add(edge[0])
+        return list(neighbors)
