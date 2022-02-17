@@ -2,6 +2,7 @@ from Graph import Graph
 from SearchAlgos import *
 
 def main():
+    # test graph from http://www.mathcs.emory.edu/~cheung/Courses/171/Syllabus/11-Graph/bfs.html
     testGraph = Graph()
 
     nodes = [(0,0),(1,1),(2,2),(3,3),(4,4),(5,5),(6,6),(7,7),(8,8)]
