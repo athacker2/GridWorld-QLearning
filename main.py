@@ -18,7 +18,11 @@ def main():
     edges = [('A','B',10),('A','C',15),('B','D',12),('B','F',15),('C','E',10),('D','F',1),('D','E',2),('F','E',5)]
     djikstraGraph.populate(nodes,edges)
 
-    djikstra(djikstraGraph,'A','E')
+    # djikstra(djikstraGraph,'A','E')
+
+    randomGraph = Graph()
+    randomGraph.generateRandom(5,weighted=True)
+    print(randomGraph)
 
 
 if __name__ == "__main__":

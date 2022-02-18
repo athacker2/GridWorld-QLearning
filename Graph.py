@@ -13,6 +13,24 @@ class Graph:
         self.Nodes = dict()
         self.Edges = []
     
+    def __repr__(self):
+        """Print list of nodes and edges in graph"""
+        return "Node: {0}\nEdges: {1}".format(self.Nodes,self.Edges)
+    
+    def generateRandom(self,numNodes,density=0.2,weighted=False):
+        """Generates a random graph with a certain number of nodes. Takes input for density of graph (likelihood of edge between two nodes)"""
+        assert numNodes > 1
+
+        for i in range(numNodes):
+            self.addNode(self.counter)
+        
+        for i in range(numNodes):
+            for j in range(i+1,numNodes):
+                if(random.randint(1,10)/10 <= density):
+                    self.Edges.append((i,j) if not weighted else (i,j,random.randint(1,10)))                   
+
+
+    
     def populate(self,nodes,edges):
         """
         Take input for a list of nodes and edges to populate the graph
@@ -26,13 +44,10 @@ class Graph:
             assert len(edge) == 2 or len(edge) == 3
             self.addEdge(edge[0],edge[1],None if len(edge) == 2 else edge[2])
     
-    def __repr__(self):
-        """Print list of nodes and edges in graph"""
-        return "Node: {0}\nEdges: {1}".format(self.Nodes,self.Edges)
-    
     def addNode(self, val, id  = None):
         """Take input for a value and id. Create a node with input value and input id (use count as id if none specified)"""
         assert id not in self.Nodes
+
         if(id is None): # if no id specified, set to current count
             id = self.counter
         self.counter += 1
