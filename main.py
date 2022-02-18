@@ -21,8 +21,9 @@ def main():
     # djikstra(djikstraGraph,'A','E')
 
     randomGraph = Graph()
-    randomGraph.generateRandom(5,weighted=True)
-    print(randomGraph)
+    randomGraph.generateRandom(10,weighted=True,density=0.5)
+    djikstra(randomGraph,0,4)
+    randomGraph.viewGraph()
 
 
 if __name__ == "__main__":

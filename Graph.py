@@ -1,5 +1,7 @@
 import random
 import string
+import igraph
+
 
 class Graph:
 
@@ -82,4 +84,17 @@ class Graph:
             elif(edge[1] == node):
                 actions.add((edge[0],edge[2]))
         return list(actions)
+    
+    def viewGraph(self):
+        g = igraph.Graph()
+        g.add_vertices(self.Nodes)
+        g.vs["name"] = [key for key in self.Nodes.keys()]
+        g.add_edges([(edge[0],edge[1]) for edge in self.Edges])
+        g.es['weight'] = [edge[2] for edge in self.Edges]
+
+        g.vs["label"] = g.vs["name"]
+        g.es['width'] = g.es['weight']
+        g.vs["color"] = ["grey" for i in range(len(self.Nodes))]
+        layout = g.layout("kk")
+        igraph.plot(g, layout=layout, bbox=(300, 300), margin=20)
     
