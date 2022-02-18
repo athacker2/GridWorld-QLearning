@@ -10,7 +10,15 @@ def main():
 
     testGraph.populate(nodes,edges)
     # bfs(testGraph,0,6)
-    dfs(testGraph,0,6)
+    # dfs(testGraph,0,6)
+
+    djikstraGraph = Graph()
+
+    nodes = [(0,'A'),(0,'B'),(0,'C'),(0,'D'),(0,'E'),(0,'F')]
+    edges = [('A','B',10),('A','C',15),('B','D',12),('B','F',15),('C','E',10),('D','F',1),('D','E',2),('F','E',5)]
+    djikstraGraph.populate(nodes,edges)
+
+    djikstra(djikstraGraph,'A','E')
 
 
 if __name__ == "__main__":

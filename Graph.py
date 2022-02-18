@@ -57,3 +57,14 @@ class Graph:
             elif(edge[1] == node):
                 neighbors.add(edge[0])
         return list(neighbors)
+    
+    def getActions(self,node):
+        """Returns a list of children nodes and edge costs for a particular node"""
+        actions = set()
+        for edge in self.Edges:
+            if(edge[0] == node):
+                actions.add((edge[1],edge[2]))
+            elif(edge[1] == node):
+                actions.add((edge[0],edge[2]))
+        return list(actions)
+    
