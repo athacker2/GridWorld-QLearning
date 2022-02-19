@@ -19,7 +19,7 @@ class Graph:
         """Print list of nodes and edges in graph"""
         return "Node: {0}\nEdges: {1}".format(self.Nodes,self.Edges)
     
-    def generateRandom(self,numNodes,density=0.2,weighted=False):
+    def generateRandom(self,numNodes,density=0.2,weighted=False,maxWeight=10):
         """Generates a random graph with a certain number of nodes. Takes input for density of graph (likelihood of edge between two nodes)"""
         assert numNodes > 1
 
@@ -65,6 +65,18 @@ class Graph:
             weight = 1
         self.Edges.append((node1,node2,weight))
     
+    def removeNode(self,node):
+        """Removes the specified node and all edges connected to that node"""
+        assert node in self.Nodes
+
+        del self.Nodes[node]
+        self.Edges = [edge for edge in self.Edges if not(edge[0] == node or edge[1] == node)]
+    
+    def removeNodeEdges(self,node):
+        """Remove all edges from a node"""
+        self.Edges = [edge for edge in self.Edges if not(edge[0] == node or edge[1] == node)]
+
+    
     def getNeighbors(self,node):
         """Returns a list of neighboring nodes for a particular node"""
         neighbors = set()
@@ -94,7 +106,10 @@ class Graph:
 
         g.vs["label"] = g.vs["name"]
         g.es['width'] = g.es['weight']
-        g.vs["color"] = ["grey" for i in range(len(self.Nodes))]
+        # g.vs["color"] = ["grey" for i in range(len(self.Nodes))]
+
+        color_dict = {0: "grey", 10: "red", 100: "pink"}
+        g.vs['color'] = [color_dict[val[1]] for val in self.Nodes.items()]
         layout = g.layout("kk")
-        igraph.plot(g, layout=layout, bbox=(300, 300), margin=20)
+        igraph.plot(g, layout=layout, bbox=(600, 600), margin=20)
     
