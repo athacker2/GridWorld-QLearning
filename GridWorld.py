@@ -1,16 +1,25 @@
+from copy import deepcopy
 from Graph import Graph
 import matplotlib.pyplot as plt
 from matplotlib import colors
 import numpy as np
+import math
 
 class GridWorld(Graph):
-    def __init__(self,rows,cols):
+    def __init__(self,rows,cols,start=None,end=None):
         """Creates a graph of dimension rows x cols that represents a grid. Adds corresponding edges and nodes. Edges in 4 cardinal directions"""
         super().__init__()
+
+        # seed start and end to corners if not passed in
+        if(start == None):
+            self.start = (0,0)
+        if(end == None):
+            self.end = (rows-1,cols-1)
+
         self.rows = rows
         self.cols = cols
         self.blockSpaces = []
-        self.rewards = []
+        self.rewards = dict()
 
         for i in range(rows):
             for j in range(cols):
@@ -27,12 +36,45 @@ class GridWorld(Graph):
                     self.addEdge(node1,node2)
         
     def addReward(self,row,col,val):
-        self.rewards.append((row,col,val))
+        self.rewards[row * self.cols + col] = val
         self.Nodes[row * self.cols + col] = val
+    
+    def getReward(self,row,col):
+        reward = self.rewards.get(row * self.cols + col,-0.01)
+
+        # clear reward once it has been claimed once
+        if not (reward == -0.01):
+            self.rewards[row * self.cols + col] = -0.01
+        return reward
     
     def blockSpace(self,row,col):
         self.blockSpaces.append((row,col))
         self.removeNodeEdges(row * self.cols + col)
+    
+    def getNeighbors(self, state):
+        node = state[0] * self.cols + state[1]
+        neighbors = super().getNeighbors(node)
+        neighbors = [(val // self.cols,val % self.cols) for val in neighbors]
+        return neighbors
+    
+    def exampleGrid(self):
+        self.blockSpace(1,2)
+        self.blockSpace(1,7)
+        self.blockSpace(2,5)
+        self.blockSpace(3,4)
+        self.blockSpace(4,1)
+        self.blockSpace(4,5)
+        self.blockSpace(4,9)
+
+        self.addReward(0,6,10)
+        self.addReward(1,4,10)
+        self.addReward(2,8,10)
+        self.addReward(1,8,100)
+        self.addReward(3,5,1000)
+
+        # set start and goal states
+        self.start = (3,1)
+        self.goal = (1,8)
     
     def viewGrid(self):
         # resize data
@@ -47,12 +89,11 @@ class GridWorld(Graph):
         data = np.where(data == 100, 3, data)
         data = np.where(data == 1000, 4, data)
 
-        data[3,1] = -1
 
         print(data)
 
         # create discrete colormap
-        cmap = colors.ListedColormap(['white','pink','grey','blue','yellow','green'])
+        cmap = colors.ListedColormap(['pink','grey','blue','yellow','green'])
 
         fig, ax = plt.subplots()
         ax.imshow(data, cmap=cmap, interpolation ='nearest',
@@ -65,10 +106,70 @@ class GridWorld(Graph):
 
         # drawing path
         # line = plt.Line2D([1.5,2.5],[3.5,3.5],linewidth=1,linestyle='-',color='black')
-        ax.add_line(line)
+        # ax.add_line(line)
         plt.show()
 
+class QLearnerPlayer:
+    def __init__(self,gamma=0.1,cutoff = 50):  
+        # each entry corresponds to a pair of nodes on the board(row,col) 
+        self.QTable = dict()
+        self.gamma = gamma
+        self.cutoff = cutoff
 
+    def getAction(self,currState,actions):
+        state_actions = [(currState,action) for action in actions]
 
-                
+        bestMove = ((-1,-1),-1 * math.inf)
+        for pair in state_actions:
+            if not (pair in self.QTable):
+                self.QTable[pair] = 0
+
+            if(self.QTable[pair] > bestMove[1]):
+                bestMove = (pair[1],self.QTable[pair])
+
+        return bestMove[0]
+    
+    def updateQTable(self,currState,nextState,reward,grid):
+        futureActions = [(nextState,neighbor) for neighbor in grid.getNeighbors(nextState)]
+
+        maxQ = -1 * math.inf
+        for action in futureActions:
+            maxQ = max(maxQ,self.QTable.get(action,0))
+
+        self.QTable[(currState,nextState)] = reward + self.gamma * maxQ
+         
+class GridSearch:
+    """Class representing the act of searching a given graph by a given agent"""
+    def __init__(self,agent,graph):
+        self.graph = graph
+        self.agent = agent
+    
+    def search(self,agent,graph):
+        """Search function that starts at the graph's start position and iteratively explores the environment using the agent's search function until a goal state is reached or the search is terminated."""
         
+        # for now require each graph instance to have a specified start and goal state(s)
+        assert not graph.start == None
+        assert not graph.goal == None
+
+        currState = graph.start
+        currReward = 0
+        currSteps = 0
+        while (not currState == graph.goal) and (currSteps < agent.cutoff):
+            print("{0}: {1}".format(currSteps,currState))
+
+            # agent decides nextstate based on current state and list of actions
+            nextState = agent.getAction(currState,graph.getNeighbors(currState))
+            # get reward (currently based only on next state, not (state,action) )
+            currReward += graph.getReward(nextState[0],nextState[1])
+            agent.updateQTable(currState,nextState,graph.getReward(nextState[0],nextState[1]),graph)
+            # update step count
+            currSteps += 1
+            currState = nextState
+        
+    def train(self,epochs=50):
+        for i in range(epochs):
+            print("Episode {0}:".format(i))
+            self.search(self.agent,deepcopy(self.graph))
+        print(self.agent.QTable)
+
+            

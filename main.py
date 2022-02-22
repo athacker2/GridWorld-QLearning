@@ -1,6 +1,6 @@
 from Graph import Graph
 from SearchAlgos import *
-from GridWorld import GridWorld
+from GridWorld import *
 
 def main():
     # # test graph from http://www.mathcs.emory.edu/~cheung/Courses/171/Syllabus/11-Graph/bfs.html
@@ -27,22 +27,12 @@ def main():
     # randomGraph.viewGraph()
 
     grid = GridWorld(6,12)
-    grid.blockSpace(1,2)
-    grid.blockSpace(1,7)
-    grid.blockSpace(2,5)
-    grid.blockSpace(3,4)
-    grid.blockSpace(4,1)
-    grid.blockSpace(4,5)
-    grid.blockSpace(4,9)
+    grid.exampleGrid()
 
-    grid.addReward(0,6,10)
-    grid.addReward(1,4,10)
-    grid.addReward(2,8,10)
-    grid.addReward(1,8,100)
-    grid.addReward(3,5,1000)
+    qLearner = QLearnerPlayer(cutoff=25)
+    searchInstance = GridSearch(qLearner,grid)
+    searchInstance.train(epochs=10000)
 
-
-    grid.viewGrid()
     
 
 
