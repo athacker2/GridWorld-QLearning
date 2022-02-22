@@ -29,7 +29,7 @@ def main():
     grid = GridWorld(6,12)
     grid.exampleGrid()
 
-    qLearner = QLearnerPlayer(cutoff=25)
+    qLearner = QLearnerPlayer()
     searchInstance = GridSearch(qLearner,grid)
     searchInstance.train(epochs=10000)
 

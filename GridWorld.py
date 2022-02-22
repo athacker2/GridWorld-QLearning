@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from matplotlib import colors
 import numpy as np
 import math
+import random
 
 class GridWorld(Graph):
     def __init__(self,rows,cols,start=None,end=None):
@@ -40,11 +41,11 @@ class GridWorld(Graph):
         self.Nodes[row * self.cols + col] = val
     
     def getReward(self,row,col):
-        reward = self.rewards.get(row * self.cols + col,-0.01)
+        reward = self.rewards.get(row * self.cols + col,-1)
 
-        # clear reward once it has been claimed once
-        if not (reward == -0.01):
-            self.rewards[row * self.cols + col] = -0.01
+        # clear reward once it has been claimed once,
+        if not (reward == -1):
+            self.rewards[row * self.cols + col] = -1
         return reward
     
     def blockSpace(self,row,col):
@@ -110,14 +111,20 @@ class GridWorld(Graph):
         plt.show()
 
 class QLearnerPlayer:
-    def __init__(self,gamma=0.1,cutoff = 50):  
+    def __init__(self,gamma=0.9,cutoff = 50,epsilon=1,min_epsilon=0.05,epsilon_decay=0.999):  
         # each entry corresponds to a pair of nodes on the board(row,col) 
         self.QTable = dict()
         self.gamma = gamma
         self.cutoff = cutoff
+        self.epsilon = epsilon
+        self.min_epsilon = min_epsilon
+        self.epsilon_decay = epsilon_decay
 
     def getAction(self,currState,actions):
         state_actions = [(currState,action) for action in actions]
+
+        if(random.random() <= self.epsilon):
+            return random.choice(state_actions)[1]
 
         bestMove = ((-1,-1),-1 * math.inf)
         for pair in state_actions:
@@ -135,8 +142,11 @@ class QLearnerPlayer:
         maxQ = -1 * math.inf
         for action in futureActions:
             maxQ = max(maxQ,self.QTable.get(action,0))
-
+            
         self.QTable[(currState,nextState)] = reward + self.gamma * maxQ
+    
+    def updateParams(self):
+        self.epsilon = max(self.epsilon*self.epsilon_decay,self.min_epsilon)
          
 class GridSearch:
     """Class representing the act of searching a given graph by a given agent"""
@@ -160,16 +170,20 @@ class GridSearch:
             # agent decides nextstate based on current state and list of actions
             nextState = agent.getAction(currState,graph.getNeighbors(currState))
             # get reward (currently based only on next state, not (state,action) )
-            currReward += graph.getReward(nextState[0],nextState[1])
-            agent.updateQTable(currState,nextState,graph.getReward(nextState[0],nextState[1]),graph)
+            reward = graph.getReward(nextState[0],nextState[1])
+            currReward += reward
+
+            agent.updateQTable(currState,nextState,reward,graph)
             # update step count
             currSteps += 1
             currState = nextState
+
         
     def train(self,epochs=50):
         for i in range(epochs):
             print("Episode {0}:".format(i))
             self.search(self.agent,deepcopy(self.graph))
+            self.agent.updateParams()
         print(self.agent.QTable)
 
             
