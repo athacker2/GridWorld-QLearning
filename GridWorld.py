@@ -44,7 +44,7 @@ class GridWorld(Graph):
         reward = self.rewards.get(row * self.cols + col,-1)
 
         # clear reward once it has been claimed once,
-        if not (reward == -1):
+        if reward > 0:
             self.rewards[row * self.cols + col] = -1
         return reward
     
@@ -77,43 +77,44 @@ class GridWorld(Graph):
         self.start = (3,1)
         self.goal = (1,8)
     
-    def viewGrid(self):
+    def viewGrid(self,ax = plt.axes,agentPos=(0,0)):
         # resize data
         data = np.array([el[1] for el in self.Nodes.items()])
         data = np.resize(data,(self.rows,self.cols))
         
-        # update data for block types for coloring
+        # create reward image
+        dataReward = np.where(data == 10, 1, data)
+        dataReward = np.where(dataReward == 100, 2, dataReward)
+        dataReward = np.where(dataReward == 1000, 3, dataReward)
+
+        # create blocked spaces image
+        dataBlocks = np.where(data > 0, 0, data)
+
         for space in self.blockSpaces:
-            data[space[0]][space[1]] = 1
+            dataBlocks[space[0]][space[1]] = 1
 
-        data = np.where(data == 10, 2, data)
-        data = np.where(data == 100, 3, data)
-        data = np.where(data == 1000, 4, data)
-
-
-        print(data)
-
-        # create discrete colormap
-        cmap = colors.ListedColormap(['pink','grey','blue','yellow','green'])
-
-        fig, ax = plt.subplots()
-        ax.imshow(data, cmap=cmap, interpolation ='nearest',
+        test = ax.imshow(dataBlocks, cmap='gray_r', interpolation ='nearest',
                                 alpha = 1, origin='upper', extent=(0,self.cols,self.rows,0))
 
+        ax.imshow(dataReward, cmap='Greens', interpolation ='nearest',
+                                alpha = 0.8, origin='upper', extent=(0,self.cols,self.rows,0))
+        
         # draw gridlines
         ax.grid(which='major', axis='both', linestyle='-', color='k', linewidth=1)
         ax.set_xticks(np.arange(0, self.cols, 1))
         ax.set_yticks(np.arange(0, self.rows, 1))
 
-        # drawing path
-        # line = plt.Line2D([1.5,2.5],[3.5,3.5],linewidth=1,linestyle='-',color='black')
-        # ax.add_line(line)
-        plt.show()
+        # drawing agent
+        agent = plt.Circle((agentPos[1] + 0.5, agentPos[0] + 0.5), 0.2, color='r')
+        ax.add_patch(agent)
+        return test
+        
 
 class QLearnerPlayer:
     def __init__(self,gamma=0.9,cutoff = 50,epsilon=1,min_epsilon=0.05,epsilon_decay=0.999):  
         # each entry corresponds to a pair of nodes on the board(row,col) 
         self.QTable = dict()
+        self.Policy = dict()
         self.gamma = gamma
         self.cutoff = cutoff
         self.epsilon = epsilon
@@ -154,7 +155,7 @@ class GridSearch:
         self.graph = graph
         self.agent = agent
     
-    def search(self,agent,graph):
+    def search(self,agent,graph,pathHistory):
         """Search function that starts at the graph's start position and iteratively explores the environment using the agent's search function until a goal state is reached or the search is terminated."""
         
         # for now require each graph instance to have a specified start and goal state(s)
@@ -162,10 +163,12 @@ class GridSearch:
         assert not graph.goal == None
 
         currState = graph.start
+        pathHistory[-1].append(graph.start)
+        
         currReward = 0
         currSteps = 0
         while (not currState == graph.goal) and (currSteps < agent.cutoff):
-            print("{0}: {1}".format(currSteps,currState))
+            # print("{0}: {1}".format(currSteps,currState))
 
             # agent decides nextstate based on current state and list of actions
             nextState = agent.getAction(currState,graph.getNeighbors(currState))
@@ -176,14 +179,59 @@ class GridSearch:
             agent.updateQTable(currState,nextState,reward,graph)
             # update step count
             currSteps += 1
+            pathHistory[-1].append(nextState)
             currState = nextState
 
         
-    def train(self,epochs=50):
+    def train(self,epochs=1):
+        pathHistory = []
+
         for i in range(epochs):
-            print("Episode {0}:".format(i))
-            self.search(self.agent,deepcopy(self.graph))
+            # print("Episode {0}:".format(i))
+            pathHistory.append(list())
+
+            newGraph = deepcopy(self.graph)
+            # newGraph.start = random.randrange(0,newGraph.rows),random.randrange(0,newGraph.cols)
+            # while newGraph.start in newGraph.blockSpaces:
+            #     newGraph.start = random.randrange(0,newGraph.rows),random.randrange(0,newGraph.cols)
+
+            self.search(self.agent,newGraph,pathHistory)
             self.agent.updateParams()
-        print(self.agent.QTable)
+        
+        for row in range(self.graph.rows):
+            for col in range(self.graph.cols):
+                state = (row,col)
+                actions = self.graph.getNeighbors(state)
+                pairs = [(state,action) for action in actions]
+
+                bestMove = ((-1,-1),-1 * math.inf)
+                for pair in pairs:
+                    if not (pair in self.agent.QTable):
+                        self.agent.QTable[pair] = 0
+
+                    if(self.agent.QTable[pair] > bestMove[1]):
+                        bestMove = (pair[1],self.agent.QTable[pair])
+
+                self.agent.Policy[state] = bestMove[0]
+        
+        # print(self.agent.Policy)
+        return pathHistory
+    
+    def searchWPolicy(self,agent,graph):
+        """Search Function to Test Policy"""
+        # for now require each graph instance to have a specified start and goal state(s)
+        assert not graph.start == None
+        assert not graph.goal == None
+
+        currState = graph.start
+        currSteps = 0
+        print(currState)
+        while (not currState == graph.goal) and (currSteps < agent.cutoff):
+            # agent decides nextstate based on current state and list of actions
+            currState = agent.Policy[currState]
+            currSteps += 1
+            print(currState)
+
+
 
             

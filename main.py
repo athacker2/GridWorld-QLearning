@@ -28,10 +28,13 @@ def main():
 
     grid = GridWorld(6,12)
     grid.exampleGrid()
+    grid.viewGrid()
 
-    qLearner = QLearnerPlayer()
-    searchInstance = GridSearch(qLearner,grid)
-    searchInstance.train(epochs=10000)
+    # qLearner = QLearnerPlayer()
+    # searchInstance = GridSearch(qLearner,grid)
+    # searchInstance.train(epochs=1000)
+    
+    # searchInstance.searchWPolicy(qLearner,grid)
 
     
 
