@@ -1,13 +1,6 @@
-from turtle import pos
 import matplotlib
 from copy import deepcopy
-
-import PyQt6
-matplotlib.use('QtAgg')
-from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
-from PyQt6 import QtWidgets
-from PyQt6.QtCore import Qt
-import numpy as np
+import argparse
 
 import sys
 from PyQt6.QtWidgets import (QApplication, QWidget, QToolTip, QPushButton, QGridLayout, QLabel, QSlider)
@@ -105,8 +98,10 @@ class MainWindow(QWidget):
         epochs = int(self.epochsSlider.value()/100 * 10000)
 
         agent = QLearnerPlayer(gamma=gamma,epsilon=epsilon,min_epsilon=minEpsilon,epsilon_decay=epsilonDecay)
-        self.grid = GridWorld(6,12)
-        self.grid.exampleGrid()
+
+        self.grid = GridWorld(args.l,args.w)
+        self.grid.loadGrid(args.g,args.start,args.goal)
+        # self.grid.exampleGrid()
 
         searchInstance = GridSearch(agent,self.grid)
         self.pathHistory = searchInstance.train(epochs=max(epochs,1))
@@ -151,4 +146,11 @@ def launch(filename=None):
 
 
 '''Pilot'''
+parser = argparse.ArgumentParser(description='Get Graph File')
+parser.add_argument('-w', default=12, type=int, help='Rows of game')
+parser.add_argument('-l', default=6, type=int, help='Columns of game')
+parser.add_argument('-g', default='example.txt', type=str, help='Input GridWorld')
+parser.add_argument('-goal', default='0,0', type=str, help='Goal Position')
+parser.add_argument('-start', default='0,0', type=str, help='Start Position')
+args = parser.parse_args()
 launch()

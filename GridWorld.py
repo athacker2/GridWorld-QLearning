@@ -7,7 +7,7 @@ import math
 import random
 
 class GridWorld(Graph):
-    def __init__(self,rows,cols,start=None,end=None):
+    def __init__(self,rows=0,cols=0,start=None,end=None):
         """Creates a graph of dimension rows x cols that represents a grid. Adds corresponding edges and nodes. Edges in 4 cardinal directions"""
         super().__init__()
 
@@ -76,6 +76,24 @@ class GridWorld(Graph):
         # set start and goal states
         self.start = (3,1)
         self.goal = (1,8)
+    
+    def loadGrid(self,path_to_grid,start,goal):
+        grid = list()
+        with open(path_to_grid) as f:
+            for line in f:
+                grid.append([int(x) for x in line.strip().split(',')])
+        
+        for i in range(len(grid)):
+            for j in range(len(grid[i])):
+                if(grid[i][j] == -1):
+                    self.blockSpace(i,j)
+                elif(grid[i][j] > 0):
+                    self.addReward(i,j,grid[i][j])
+        
+        self.start = tuple([int(x) for x in start.strip().split(',')])
+        self.goal = tuple([int(x) for x in goal.strip().split(',')])
+        print(self.start)
+        print(self.goal)
     
     def viewGrid(self,ax = plt.axes,agentPos=(0,0)):
         # resize data
