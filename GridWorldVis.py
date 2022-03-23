@@ -111,7 +111,10 @@ class MainWindow(QWidget):
         searchInstance = GridSearch(agent,self.grid)
         self.pathHistory = searchInstance.train(epochs=max(epochs,1))
         
-    
+        self.stepSlider.setMinimum(0)
+        self.stepSlider.setMaximum(len(self.pathHistory[0]))
+        self.stepSlider.setSingleStep(1)
+
         maxEpochs = int(self.epochsSlider.value()/100 * 10000)
         position = int(maxEpochs*self.iterationSlider.value()/100)
 
@@ -128,12 +131,13 @@ class MainWindow(QWidget):
             return
         maxEpochs = int(self.epochsSlider.value()/100 * 10000)
         position = int(maxEpochs*self.iterationSlider.value()/100)
-        step = int(len(self.pathHistory[position]) * self.stepSlider.value()/100)
 
-        ax = self.figure.add_subplot(111)
-        ax.clear()
-        
-        ax = self.grid.viewGrid(ax,agentPos=self.pathHistory[position][step])
+        self.stepSlider.setMinimum(0)
+        self.stepSlider.setMaximum(len(self.pathHistory[position])-1)
+        step = self.stepSlider.value()
+
+        ax = self.figure.axes[0]
+        ax = self.grid.updateGrid(ax,agentPos=self.pathHistory[position][step])
         self.vis.draw()
 
 

@@ -108,6 +108,14 @@ class GridWorld(Graph):
         agent = plt.Circle((agentPos[1] + 0.5, agentPos[0] + 0.5), 0.2, color='r')
         ax.add_patch(agent)
         return test
+    
+    def updateGrid(self,ax = plt.axes,agentPos=(0,0)):
+        try:
+            ax.patches.pop()
+        except:
+            print("Failed to pop")
+        agent = plt.Circle((agentPos[1] + 0.5, agentPos[0] + 0.5), 0.2, color='r')
+        ax.add_patch(agent)
         
 
 class QLearnerPlayer:
@@ -191,9 +199,6 @@ class GridSearch:
             pathHistory.append(list())
 
             newGraph = deepcopy(self.graph)
-            # newGraph.start = random.randrange(0,newGraph.rows),random.randrange(0,newGraph.cols)
-            # while newGraph.start in newGraph.blockSpaces:
-            #     newGraph.start = random.randrange(0,newGraph.rows),random.randrange(0,newGraph.cols)
 
             self.search(self.agent,newGraph,pathHistory)
             self.agent.updateParams()
